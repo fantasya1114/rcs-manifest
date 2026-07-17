@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: rcs-wholesale
-          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale:latest
+          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale:c6a8a2f918990d86117899807402a71234bc6837
           ports:
             - containerPort: 8080
           envFrom:
