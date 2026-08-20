@@ -44,6 +44,8 @@ spec:
                 secretKeyRef:
                   name: rcs-wholesale-db-secret
                   key: password
+            - name: KAFKA_TOPIC_AUTO_CREATE
+              value: "false"
             - name: KAFKA_BROKERS
               valueFrom:
                 configMapKeyRef:
@@ -109,8 +111,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: rss-receiver
-  minReplicas: 2
-  maxReplicas: 8
+  minReplicas: 1
+  maxReplicas: 3
   metrics:
     - type: Resource
       resource:
