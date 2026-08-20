@@ -23,7 +23,7 @@ spec:
       serviceAccountName: rcs-wholesale-sa
       containers:
         - name: batch-worker
-          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-batch-worker:2d109135d04bab2430865881a8ff1f0b88317d63
+          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-batch-worker:81f82295ae570ac95b73f91330bc4563988cba3c
           ports:
             - containerPort: 8083
           env:
