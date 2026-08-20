@@ -7,7 +7,7 @@ metadata:
     app: rss-receiver
     component: maap-webhook-receiver
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: rss-receiver
@@ -23,7 +23,7 @@ spec:
       serviceAccountName: rcs-wholesale-sa
       containers:
         - name: rss-receiver
-          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-rss-receiver:027382088e49581e36caec3212017d3a54481506
+          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-rss-receiver:latest
           ports:
             - containerPort: 8085
           env:
@@ -75,13 +75,14 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8085
-            initialDelaySeconds: 20
+            initialDelaySeconds: 90
             periodSeconds: 10
+            failureThreshold: 5
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: 8085
-            initialDelaySeconds: 40
+            initialDelaySeconds: 120
             periodSeconds: 20
 ---
 apiVersion: v1
