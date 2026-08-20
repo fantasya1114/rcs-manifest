@@ -57,6 +57,8 @@ spec:
               value: "AWS_MSK_IAM"
             - name: KAFKA_SASL_CALLBACK_HANDLER
               value: "software.amazon.msk.auth.iam.IAMClientCallbackHandler"
+            - name: KAFKA_SASL_JAAS_CONFIG
+              value: "software.amazon.msk.auth.iam.IAMLoginModule required;"
             - name: AWS_REGION
               value: "ap-northeast-2"
             - name: DYNAMODB_TABLE_PREFIX
