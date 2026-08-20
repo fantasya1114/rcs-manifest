@@ -51,6 +51,12 @@ spec:
                 secretKeyRef:
                   name: rcs-wholesale-redis-secret
                   key: host
+            - name: REDIS_PORT
+              value: "6380"
+            - name: REDIS_SSL_ENABLED
+              value: "true"
+            - name: MANAGEMENT_HEALTH_REDIS_ENABLED
+              value: "false"
             - name: MAAP_CORE_URL
               valueFrom:
                 configMapKeyRef:
@@ -124,8 +130,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: brand-portal-api
-  minReplicas: 2
-  maxReplicas: 4
+  minReplicas: 1
+  maxReplicas: 3
   metrics:
     - type: Resource
       resource:
