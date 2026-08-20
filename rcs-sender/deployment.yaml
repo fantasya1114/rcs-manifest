@@ -23,7 +23,7 @@ spec:
       serviceAccountName: rcs-wholesale-sa
       containers:
         - name: rcs-sender
-          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-rcs-sender:latest
+          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-rcs-sender:2d109135d04bab2430865881a8ff1f0b88317d63
           ports:
             - containerPort: 8084
           env:
