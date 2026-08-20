@@ -49,6 +49,14 @@ spec:
                 secretKeyRef:
                   name: rcs-wholesale-redis-secret
                   key: host
+            - name: REDIS_PORT
+              value: "6380"
+            - name: REDIS_SSL_ENABLED
+              value: "true"
+            - name: KAFKA_TOPIC_AUTO_CREATE
+              value: "false"
+            - name: MANAGEMENT_HEALTH_REDIS_ENABLED
+              value: "false"
             - name: KAFKA_BROKERS
               valueFrom:
                 configMapKeyRef:
@@ -135,8 +143,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: rcs-receiver
-  minReplicas: 2
-  maxReplicas: 10
+  minReplicas: 1
+  maxReplicas: 3
   metrics:
     - type: Resource
       resource:
