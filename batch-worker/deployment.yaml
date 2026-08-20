@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: batch-worker
+  namespace: rcs-wholesale
+  labels:
+    app: batch-worker
+    component: batch
+spec:
+  replicas: 1  # 배치는 단일 인스턴스 (ShedLock으로 중복 방지)
+  selector:
+    matchLabels:
+      app: batch-worker
+  template:
+    metadata:
+      labels:
+        app: batch-worker
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8083"
+    spec:
+      serviceAccountName: rcs-wholesale-sa
+      containers:
+        - name: batch-worker
+          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-batch-worker:latest
+          ports:
+            - containerPort: 8083
+          env:
+            - name: SERVER_PORT
+              value: "8083"
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-db-secret
+                  key: host
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-db-secret
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-db-secret
+                  key: password
+            - name: REDIS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-redis-secret
+                  key: host
+            - name: AWS_REGION
+              value: "ap-northeast-2"
+            - name: DEPLOY_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: rcs-wholesale-config
+                  key: deploy.env
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 60
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: batch-worker
+  namespace: rcs-wholesale
+spec:
+  selector:
+    app: batch-worker
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8083
+  type: ClusterIP
