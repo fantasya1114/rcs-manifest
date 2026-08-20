@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rss-relay
+  namespace: rcs-wholesale
+  labels:
+    app: rss-relay
+    component: webhook-relay
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rss-relay
+  template:
+    metadata:
+      labels:
+        app: rss-relay
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8081"
+    spec:
+      serviceAccountName: rcs-wholesale-sa
+      containers:
+        - name: rss-relay
+          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-rss-relay:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SERVER_PORT
+              value: "8081"
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-db-secret
+                  key: host
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-db-secret
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-db-secret
+                  key: password
+            - name: REDIS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-redis-secret
+                  key: host
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: rcs-wholesale-config
+                  key: kafka.brokers
+            - name: KAFKA_SECURITY_PROTOCOL
+              value: "SASL_SSL"
+            - name: KAFKA_SASL_MECHANISM
+              value: "AWS_MSK_IAM"
+            - name: KAFKA_SASL_CALLBACK_HANDLER
+              value: "software.amazon.msk.auth.iam.IAMClientCallbackHandler"
+            - name: KAFKA_CONSUMER_GROUP
+              value: "rss-relay"
+            - name: AWS_REGION
+              value: "ap-northeast-2"
+            - name: DEPLOY_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: rcs-wholesale-config
+                  key: deploy.env
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rss-relay
+  namespace: rcs-wholesale
+spec:
+  selector:
+    app: rss-relay
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8081
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: rss-relay-hpa
+  namespace: rcs-wholesale
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rss-relay
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
