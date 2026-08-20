@@ -7,7 +7,7 @@ metadata:
     app: brand-portal-api
     component: brand-portal
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: brand-portal-api
@@ -23,7 +23,7 @@ spec:
       serviceAccountName: rcs-wholesale-sa
       containers:
         - name: brand-portal-api
-          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-brand-portal-api:027382088e49581e36caec3212017d3a54481506
+          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-brand-portal-api:latest
           ports:
             - containerPort: 8082
           env:
@@ -89,14 +89,16 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8082
-            initialDelaySeconds: 30
+            initialDelaySeconds: 90
             periodSeconds: 10
+            failureThreshold: 5
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: 8082
-            initialDelaySeconds: 60
+            initialDelaySeconds: 120
             periodSeconds: 20
+            failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service
