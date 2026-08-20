@@ -68,6 +68,8 @@ spec:
               value: "AWS_MSK_IAM"
             - name: KAFKA_SASL_CALLBACK_HANDLER
               value: "software.amazon.msk.auth.iam.IAMClientCallbackHandler"
+            - name: KAFKA_SASL_JAAS_CONFIG
+              value: "software.amazon.msk.auth.iam.IAMLoginModule required;"
             - name: KAFKA_CONSUMER_GROUP
               value: "rcs-wholesale-sender"
             - name: MAAP_CORE_URL
@@ -101,11 +103,11 @@ spec:
                   key: deploy.env
           resources:
             requests:
-              cpu: "500m"
-              memory: "1Gi"
+              cpu: "250m"
+              memory: "512Mi"
             limits:
-              cpu: "2"
-              memory: "2Gi"
+              cpu: "1"
+              memory: "1Gi"
           readinessProbe:
             httpGet:
               path: /actuator/health
