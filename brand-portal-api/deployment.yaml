@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: brand-portal-api
+  namespace: rcs-wholesale
+  labels:
+    app: brand-portal-api
+    component: brand-portal
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: brand-portal-api
+  template:
+    metadata:
+      labels:
+        app: brand-portal-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8082"
+    spec:
+      serviceAccountName: rcs-wholesale-sa
+      containers:
+        - name: brand-portal-api
+          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-brand-portal-api:latest
+          ports:
+            - containerPort: 8082
+          env:
+            - name: SERVER_PORT
+              value: "8082"
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-db-secret
+                  key: host
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-db-secret
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-db-secret
+                  key: password
+            - name: REDIS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-redis-secret
+                  key: host
+            - name: MAAP_CORE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: rcs-wholesale-config
+                  key: maap.core.url
+            - name: MAAP_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-maap-secret
+                  key: client-id
+            - name: MAAP_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-maap-secret
+                  key: client-secret
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-jwt-secret
+                  key: secret
+            - name: AWS_REGION
+              value: "ap-northeast-2"
+            - name: DEPLOY_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: rcs-wholesale-config
+                  key: deploy.env
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            initialDelaySeconds: 60
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: brand-portal-api
+  namespace: rcs-wholesale
+spec:
+  selector:
+    app: brand-portal-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8082
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: brand-portal-api-hpa
+  namespace: rcs-wholesale
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: brand-portal-api
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
