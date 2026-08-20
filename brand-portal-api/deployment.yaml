@@ -23,7 +23,7 @@ spec:
       serviceAccountName: rcs-wholesale-sa
       containers:
         - name: brand-portal-api
-          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-brand-portal-api:2fc30bea52bccaa12faca3fdcc395d22d5f6c453
+          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-brand-portal-api:5b65c65e913dc8d9ac7e16ec56f465ee4c9a3bab
           ports:
             - containerPort: 8082
           env:
