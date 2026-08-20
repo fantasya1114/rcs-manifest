@@ -1,0 +1,146 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rcs-sender
+  namespace: rcs-wholesale
+  labels:
+    app: rcs-sender
+    component: messaging
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rcs-sender
+  template:
+    metadata:
+      labels:
+        app: rcs-sender
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8084"
+    spec:
+      serviceAccountName: rcs-wholesale-sa
+      containers:
+        - name: rcs-sender
+          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-rcs-sender:latest
+          ports:
+            - containerPort: 8084
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-db-secret
+                  key: host
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-db-secret
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-db-secret
+                  key: password
+            - name: REDIS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-redis-secret
+                  key: host
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: rcs-wholesale-config
+                  key: kafka.brokers
+            - name: KAFKA_SECURITY_PROTOCOL
+              value: "SASL_SSL"
+            - name: KAFKA_SASL_MECHANISM
+              value: "AWS_MSK_IAM"
+            - name: KAFKA_SASL_CALLBACK_HANDLER
+              value: "software.amazon.msk.auth.iam.IAMClientCallbackHandler"
+            - name: KAFKA_CONSUMER_GROUP
+              value: "rcs-wholesale-sender"
+            - name: MAAP_CORE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: rcs-wholesale-config
+                  key: maap.core.url
+            - name: MAAP_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-maap-secret
+                  key: client-id
+            - name: MAAP_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-maap-secret
+                  key: client-secret
+            - name: AWS_REGION
+              value: "ap-northeast-2"
+            - name: DYNAMODB_TABLE_PREFIX
+              value: "rcs_"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rcs-wholesale-jwt-secret
+                  key: secret
+            - name: DEPLOY_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: rcs-wholesale-config
+                  key: deploy.env
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8084
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8084
+            initialDelaySeconds: 60
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rcs-sender
+  namespace: rcs-wholesale
+spec:
+  selector:
+    app: rcs-sender
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8084
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: rcs-sender-hpa
+  namespace: rcs-wholesale
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rcs-sender
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
