@@ -23,7 +23,7 @@ spec:
       serviceAccountName: rcs-wholesale-sa
       containers:
         - name: rss-receiver
-          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-rss-receiver:dbfa57fe38be488a5a79284cbd06bcb706f39600
+          image: 615993872885.dkr.ecr.ap-northeast-2.amazonaws.com/rcs-wholesale-rss-receiver:72f229fc6ba1fbdebf0d5295a0e4e53f20d8c5ae
           ports:
             - containerPort: 8085
           env:
