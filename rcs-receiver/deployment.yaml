@@ -85,6 +85,8 @@ spec:
                 secretKeyRef:
                   name: rcs-maap-secret
                   key: client-secret
+            - name: DYNAMODB_ENDPOINT
+              value: "https://dynamodb.ap-northeast-2.amazonaws.com"
             - name: AWS_REGION
               value: "ap-northeast-2"
             - name: DYNAMODB_TABLE_PREFIX

@@ -74,6 +74,8 @@ spec:
               value: "software.amazon.msk.auth.iam.IAMLoginModule required;"
             - name: KAFKA_CONSUMER_GROUP
               value: "rss-relay"
+            - name: DYNAMODB_ENDPOINT
+              value: "https://dynamodb.ap-northeast-2.amazonaws.com"
             - name: AWS_REGION
               value: "ap-northeast-2"
             - name: DEPLOY_ENV
